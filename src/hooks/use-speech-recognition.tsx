@@ -10,6 +10,14 @@ interface SpeechRecognitionHook {
   resetTranscript: () => void;
 }
 
+// Define the global SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 // Create a type for the SpeechRecognition object
 interface SpeechRecognitionInterface extends EventTarget {
   continuous: boolean;
@@ -18,9 +26,26 @@ interface SpeechRecognitionInterface extends EventTarget {
   start: () => void;
   stop: () => void;
   abort: () => void;
-  onresult: (event: any) => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
   onerror: (event: any) => void;
   onend: () => void;
+}
+
+// Define the SpeechRecognitionEvent interface
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  [index: number]: {
+    transcript: string;
+  };
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+}
+
+interface SpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
 }
 
 export function useSpeechRecognition(): SpeechRecognitionHook {
@@ -39,7 +64,7 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = 'en-US';
       
-      recognitionInstance.onresult = (event) => {
+      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         const current = Array.from(event.results).pop();
         if (current && current.isFinal) {
           setTranscript(current[0].transcript);
