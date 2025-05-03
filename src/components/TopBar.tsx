@@ -4,7 +4,13 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
-const TopBar = () => {
+interface TopBarProps {
+  onExportPDF: () => void;
+  isExporting?: boolean;
+  hasResults?: boolean;
+}
+
+const TopBar = ({ onExportPDF, isExporting = false, hasResults = false }: TopBarProps) => {
   return (
     <div className="w-full bg-background border-b border-border py-4 px-6 flex items-center justify-between backdrop-blur-sm bg-opacity-80">
       <div className="flex items-center gap-3">
@@ -30,6 +36,8 @@ const TopBar = () => {
           variant="ghost" 
           size="icon" 
           className="rounded-full bg-secondary/40 backdrop-blur-sm hover:bg-secondary/60"
+          onClick={onExportPDF}
+          disabled={isExporting || !hasResults}
         >
           <Download className="h-5 w-5" />
           <span className="sr-only">Download</span>

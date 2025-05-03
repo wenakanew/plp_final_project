@@ -6,7 +6,7 @@
 export const apiConfig = {
   // Azure OpenAI Configuration
   azureOpenAI: {
-    isEnabled: false,
+    isEnabled: false, // Set to true when properly configured on the backend
     endpoint: process.env.AZURE_OPENAI_ENDPOINT || "",
     deploymentName: process.env.DEPLOYMENT_NAME || "gpt-4o",
     apiVersion: process.env.API_VERSION || "2024-12-01-preview"
@@ -14,27 +14,30 @@ export const apiConfig = {
   
   // Social Media APIs
   twitter: {
-    isEnabled: false,
+    isEnabled: false, // Set to true when properly configured on the backend
   },
   
   // Telegram Configuration
   telegram: {
-    isEnabled: false,
+    isEnabled: false, // Set to true when properly configured on the backend
     channels: process.env.TELEGRAM_CHANNELS?.split(',') || ["BBCBreaking", "CNN"]
   },
   
   // YouTube API Configuration
   youtube: {
-    isEnabled: false,
+    isEnabled: false, // Set to true when properly configured on the backend
   },
   
   // RSS Feed Configuration
   rssFeeds: {
-    isEnabled: true,
+    isEnabled: true, // We're using RSS feeds directly in the frontend
     feeds: [
       "https://feeds.bbci.co.uk/news/rss.xml",
       "https://rss.cnn.com/rss/edition.rss",
-      "https://www.reutersagency.com/feed/?best-sectors=technology"
+      "https://www.reutersagency.com/feed/?best-sectors=technology",
+      "https://techcrunch.com/feed/",
+      "https://www.theguardian.com/world/rss",
+      "https://www.sciencedaily.com/rss/top.xml"
     ]
   }
 };
@@ -42,9 +45,10 @@ export const apiConfig = {
 // Feature flags for the application
 export const featureFlags = {
   speechToText: true,
-  textToSpeech: false,
+  textToSpeech: true,
   sentimentAnalysis: true,
   imagePreview: true,
   analytics: true,
-  pdfExport: false
+  pdfExport: true,
+  aiSummarization: false // Set to true when properly configured with Azure OpenAI
 };

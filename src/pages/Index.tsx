@@ -6,82 +6,98 @@ import InputBox from "@/components/InputBox";
 import ResultsDisplay from "@/components/ResultsDisplay";
 import AnalyticsPanel from "@/components/AnalyticsPanel";
 import { useToast } from "@/hooks/use-toast";
-
-const MOCK_RESULTS = [
-  {
-    id: 1,
-    title: "AI Advancements Transform Media Landscape in 2025",
-    snippet:
-      "Recent developments in AI technology have radically changed how news is consumed. Leading companies are now leveraging natural language processing to analyze vast amounts of news data in real-time, providing users with personalized insights.",
-    source: "TechCrunch",
-    sourceUrl: "#",
-    imageUrl: "https://images.unsplash.com/photo-1677442135066-8d0d49e11384?q=80&w=800&auto=format&fit=crop",
-    timestamp: "2 hours ago",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 2,
-    title: "Global Markets React to New Economic Policies",
-    snippet:
-      "Stock markets worldwide showed mixed reactions to the implementation of new economic policies aimed at curbing inflation. Analysts are divided on the potential long-term impacts, with some predicting a stabilization period followed by growth.",
-    source: "Financial Times",
-    sourceUrl: "#",
-    timestamp: "5 hours ago",
-    sentiment: "neutral" as const,
-  },
-  {
-    id: 3,
-    title: "Climate Change: New Study Reveals Accelerating Impact",
-    snippet:
-      "A comprehensive study published yesterday indicates that the effects of climate change are accelerating faster than previously predicted. The research highlights the urgent need for more aggressive carbon reduction strategies globally.",
-    source: "Reuters",
-    sourceUrl: "#",
-    imageUrl: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?q=80&w=800&auto=format&fit=crop",
-    timestamp: "1 day ago",
-    sentiment: "negative" as const,
-  },
-  {
-    id: 4,
-    title: "Innovation in Renewable Energy Storage Solutions",
-    snippet:
-      "Breakthrough technology in energy storage has been announced by researchers, potentially solving one of the biggest challenges in renewable energy adoption. The new storage method could make solar and wind power more reliable for consistent energy needs.",
-    source: "ScienceDaily",
-    sourceUrl: "#",
-    timestamp: "3 hours ago",
-    sentiment: "positive" as const,
-  },
-];
+import { toast } from "sonner";
+import { fetchRssFeeds, processRssItems, RssItem } from "../services/rssService";
+import { processAnalytics, AnalyticsData } from "../services/analyticsService";
+import { generateSummary } from "../services/aiService";
+import { exportToPDF } from "../services/exportService";
 
 const Index = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [analyticsPanelCollapsed, setAnalyticsPanelCollapsed] = useState(true);
   const [currentTopic, setCurrentTopic] = useState<string | undefined>();
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<RssItem[]>([]);
+  const [allItems, setAllItems] = useState<RssItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showWelcome, setShowWelcome] = useState(true);
-  const { toast } = useToast();
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast: toastNotification } = useToast();
 
-  const handleSearch = (input: string) => {
+  // Initialize data on component mount
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        const items = await fetchRssFeeds();
+        if (items.length > 0) {
+          setAllItems(items);
+          setIsInitialLoad(false);
+        }
+      } catch (error) {
+        console.error("Failed to initialize data:", error);
+        setIsInitialLoad(false);
+      }
+    };
+    
+    initializeData();
+  }, []);
+
+  const handleSearch = async (input: string) => {
     setShowWelcome(false);
     setIsLoading(true);
     setCurrentTopic(input);
     setAnalyticsPanelCollapsed(false);
     
-    // Simulate API call
-    setTimeout(() => {
-      setResults(MOCK_RESULTS);
-      setIsLoading(false);
+    try {
+      // If we haven't loaded any items yet or need fresh data
+      if (allItems.length === 0) {
+        const freshItems = await fetchRssFeeds();
+        setAllItems(freshItems);
+      }
+      
+      // Process items based on search term
+      const filteredResults = processRssItems(allItems, input);
+      setResults(filteredResults);
+      
+      // Generate analytics from results
+      const analytics = processAnalytics(filteredResults);
+      setAnalyticsData(analytics);
+      
+      // Generate AI summary (in production, this would connect to Azure OpenAI)
+      const summary = await generateSummary(filteredResults);
       
       toast({
         title: "Analysis Complete",
-        description: `Summarized ${MOCK_RESULTS.length} sources about "${input}"`,
+        description: `Found ${filteredResults.length} sources about "${input}"`,
       });
-    }, 2000);
+    } catch (error) {
+      console.error("Error during search:", error);
+      toast({
+        title: "Search Error",
+        description: "There was an error processing your search. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (results.length === 0) return;
+    
+    setIsExporting(true);
+    await exportToPDF(results, currentTopic);
+    setIsExporting(false);
   };
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
-      <TopBar />
+      <TopBar 
+        onExportPDF={handleExportPDF}
+        isExporting={isExporting}
+        hasResults={results.length > 0}
+      />
       
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
@@ -93,8 +109,12 @@ const Index = () => {
           <div className="flex-1 overflow-y-auto p-4">
             {showWelcome ? (
               <div className="h-full flex flex-col items-center justify-center max-w-lg mx-auto text-center">
-                <div className="bg-gradient-to-r from-tunei-primary to-tunei-purple rounded-full p-6 mb-6">
-                  <span className="text-4xl font-bold text-white">T</span>
+                <div className="bg-gradient-to-r from-primary to-accent rounded-full p-6 mb-6">
+                  <img 
+                    src="/lovable-uploads/2095d46f-4c23-4a22-a63b-a183bfc5247e.png" 
+                    alt="Tunei Logo" 
+                    className="h-10 w-10"
+                  />
                 </div>
                 <h1 className="text-3xl font-bold mb-4">Welcome to Tunei</h1>
                 <p className="text-lg text-muted-foreground mb-8">
@@ -128,7 +148,7 @@ const Index = () => {
                 <p className="mt-4 text-muted-foreground">Analyzing sources about "{currentTopic}"...</p>
               </div>
             ) : (
-              <ResultsDisplay results={results} />
+              <ResultsDisplay results={results} searchTerm={currentTopic} />
             )}
           </div>
           
@@ -139,7 +159,13 @@ const Index = () => {
         </div>
         
         {/* Analytics Panel */}
-        <AnalyticsPanel isCollapsed={analyticsPanelCollapsed} topic={currentTopic} />
+        <AnalyticsPanel 
+          isCollapsed={analyticsPanelCollapsed} 
+          setIsCollapsed={setAnalyticsPanelCollapsed}
+          topic={currentTopic} 
+          data={analyticsData}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
