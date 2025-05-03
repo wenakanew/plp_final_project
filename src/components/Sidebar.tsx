@@ -44,15 +44,15 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   return (
     <div 
       className={cn(
-        "h-full bg-sidebar border-r border-border transition-all duration-300",
+        "h-full bg-sidebar border-r border-border/40 transition-all duration-300 backdrop-blur-sm bg-opacity-80",
         collapsed ? "w-16" : "w-64"
       )}
     >
       <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-border flex justify-end">
+        <div className="p-4 border-b border-border/40 flex justify-end">
           <button 
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 hover:bg-sidebar-accent rounded-md transition-colors"
+            className="p-1.5 hover:bg-sidebar-accent/60 rounded-md transition-colors"
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -62,20 +62,40 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
           </button>
         </div>
         
-        <div className="flex-1 py-4 space-y-1">
+        <div className="flex-1 py-6 space-y-1">
           {sidebarItems.map((item, index) => (
             <div 
               key={index}
               className={cn(
-                "tunei-sidebar-item mx-2", 
-                item.active && "active"
+                "tunei-sidebar-item mx-2 backdrop-blur-sm", 
+                item.active && "active bg-gradient-to-r from-primary/20 to-transparent"
               )}
             >
-              {item.icon}
-              {!collapsed && <span>{item.text}</span>}
+              <div className={cn(
+                "flex items-center justify-center",
+                item.active && "text-primary"
+              )}>
+                {item.icon}
+              </div>
+              {!collapsed && (
+                <span className={cn(
+                  "transition-opacity duration-200",
+                  item.active ? "text-primary font-medium" : ""
+                )}>
+                  {item.text}
+                </span>
+              )}
             </div>
           ))}
         </div>
+
+        {/* Bottom decoration */}
+        {!collapsed && (
+          <div className="p-6 opacity-30">
+            <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+            <div className="mt-6 text-xs text-center text-muted-foreground tracking-widest">TUNEI</div>
+          </div>
+        )}
       </div>
     </div>
   );

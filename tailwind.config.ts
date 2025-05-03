@@ -64,8 +64,9 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         },
         "tunei-dark": "#1A1F2C",
-        "tunei-purple": "#7E69AB",
-        "tunei-primary": "#9b87f5",
+        "tunei-steel": "#8E9196",
+        "tunei-primary": "#6c8ffa",
+        "tunei-blue": "#0EA5E9",
         "tunei-light": "#E5DEFF",
       },
       borderRadius: {
@@ -98,6 +99,18 @@ export default {
           "0%, 100%": { opacity: "0.6" },
           "50%": { opacity: "0.9" },
         },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        "radar-ping": {
+          "0%": { transform: "scale(0.8)", opacity: "0.8" },
+          "70%, 100%": { transform: "scale(1.5)", opacity: "0" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -106,7 +119,17 @@ export default {
         "fade-out": "fade-out 0.3s ease-out forwards",
         "slide-in": "slide-in 0.3s ease-out forwards",
         "pulse-light": "pulse-light 2s ease-in-out infinite",
-      }
+        "gradient-shift": "gradient-shift 5s ease infinite",
+        "radar-ping": "radar-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "float": "float 5s ease-in-out infinite",
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "cyber-grid": "linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
+      },
+      backgroundSize: {
+        "cyber-grid": "40px 40px",
+      },
     }
   },
   plugins: [require("tailwindcss-animate")],

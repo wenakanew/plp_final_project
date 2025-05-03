@@ -6,21 +6,31 @@ import { Download } from "lucide-react";
 
 const TopBar = () => {
   return (
-    <div className="w-full bg-background border-b border-border py-3 px-4 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="bg-gradient-to-r from-tunei-primary to-tunei-purple rounded-full p-1.5 text-white flex items-center justify-center">
-          <span className="text-sm font-bold">T</span>
+    <div className="w-full bg-background border-b border-border py-4 px-6 flex items-center justify-between backdrop-blur-sm bg-opacity-80">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 relative">
+          <img 
+            src="/lovable-uploads/2095d46f-4c23-4a22-a63b-a183bfc5247e.png" 
+            alt="Tunei Logo" 
+            className="w-full h-full object-contain"
+          />
         </div>
-        <h1 className="text-lg font-medium">
-          <span className="text-tunei-primary font-bold">Tunei</span>
-          <span className="text-sm text-muted-foreground ml-1 hidden md:inline-block">
-            – Tune into Real-Time Truth
+        <div className="flex flex-col">
+          <h1 className="text-xl font-medium tracking-wide">
+            <span className="bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent font-bold">TUNEI</span>
+          </h1>
+          <span className="text-xs text-muted-foreground tracking-wider hidden md:inline-block">
+            TUNE INTO REAL-TIME TRUTH.
           </span>
-        </h1>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="rounded-full">
+      <div className="flex items-center gap-3">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full bg-secondary/40 backdrop-blur-sm hover:bg-secondary/60"
+        >
           <Download className="h-5 w-5" />
           <span className="sr-only">Download</span>
         </Button>
