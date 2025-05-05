@@ -60,7 +60,14 @@ export const apiConfig = {
   pexels: {
     isEnabled: true,
     apiKey: "GQxvgyyXd9lcNKaCw7Zv9DNiP61Wu2KACDLbouvbNSqTW1F8HalFRw2d"
-  }
+  },
+  
+  // CORS proxies for API requests
+  corsProxies: [
+    "https://corsproxy.io/?",
+    "https://cors-anywhere.herokuapp.com/",
+    "https://api.allorigins.win/raw?url="
+  ]
 };
 
 // Feature flags for the application
@@ -73,3 +80,12 @@ export const featureFlags = {
   pdfExport: true,
   aiSummarization: true
 };
+
+// Predefined topic categories users can select
+export const predefinedCategories = [
+  "William Ruto",
+  "Kenya Politics",
+  "East Africa News",
+  "African Business",
+  "Global Headlines"
+];

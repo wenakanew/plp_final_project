@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, ArrowRight } from "lucide-react";
+import { Mic, ArrowRight, List } from "lucide-react";
 import { useSpeechRecognition } from "../hooks/use-speech-recognition";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { predefinedCategories } from "../config/api-config";
 
 interface InputBoxProps {
   onSubmit: (input: string) => void;
@@ -13,6 +14,7 @@ interface InputBoxProps {
 
 const InputBox = ({ onSubmit, isLoading }: InputBoxProps) => {
   const [input, setInput] = useState("");
+  const [showCategories, setShowCategories] = useState(false);
   const { toast } = useToast();
   const { 
     isListening, 
@@ -27,10 +29,11 @@ const InputBox = ({ onSubmit, isLoading }: InputBoxProps) => {
     if (input.trim() === "") return;
     
     onSubmit(input);
-    setInput("");
+    setShowCategories(false); // Hide categories after submit
   };
 
-  React.useEffect(() => {
+  // Apply speech recognition transcript to input
+  useEffect(() => {
     if (transcript) {
       setInput(transcript);
     }
@@ -52,8 +55,19 @@ const InputBox = ({ onSubmit, isLoading }: InputBoxProps) => {
     }
   };
 
+  const handleCategorySelect = (category: string) => {
+    setInput(category);
+    setShowCategories(false);
+    // Auto-submit when category is selected
+    onSubmit(category);
+  };
+
+  const toggleCategories = () => {
+    setShowCategories(!showCategories);
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto relative">
       <form onSubmit={handleSubmit} className="relative">
         <input
           type="text"
@@ -64,6 +78,17 @@ const InputBox = ({ onSubmit, isLoading }: InputBoxProps) => {
           disabled={isLoading}
         />
         <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
+          <Button
+            type="button"
+            onClick={toggleCategories}
+            variant="ghost"
+            size="icon"
+            className="rounded-full hover:bg-primary/10 transition-colors"
+          >
+            <List className="h-5 w-5" />
+            <span className="sr-only">Show categories</span>
+          </Button>
+          
           <Button
             type="button"
             onClick={handleMicClick}
@@ -92,6 +117,26 @@ const InputBox = ({ onSubmit, isLoading }: InputBoxProps) => {
           </Button>
         </div>
       </form>
+      
+      {/* Categories dropdown */}
+      {showCategories && (
+        <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg">
+          <div className="p-1">
+            <div className="text-xs font-medium px-2 py-1 text-muted-foreground">
+              Popular Topics
+            </div>
+            {predefinedCategories.map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategorySelect(category)}
+                className="w-full text-left px-3 py-2 hover:bg-accent rounded-sm text-sm"
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
