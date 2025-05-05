@@ -1,17 +1,32 @@
+
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Download, Smile, Meh, Frown } from "lucide-react";
+import { 
+  Play, 
+  Pause, 
+  Download, 
+  Smile, 
+  Meh, 
+  Frown, 
+  BookOpen,
+  BookText
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RssItem } from "../services/rssService";
 import { speechService } from "../services/speechService";
 import { exportToPDF } from "../services/exportService";
 import { toast } from "sonner";
+import ArticleView from "./ArticleView";
 
 interface ResultsDisplayProps {
   results: RssItem[];
   searchTerm?: string;
+  aiGeneratedArticle?: string;
+  topics?: string[];
+  viewMode?: "sources" | "article";
+  onToggleViewMode?: () => void;
 }
 
 const getSentimentIcon = (sentiment: string) => {
@@ -25,7 +40,14 @@ const getSentimentIcon = (sentiment: string) => {
   }
 };
 
-const ResultsDisplay = ({ results, searchTerm }: ResultsDisplayProps) => {
+const ResultsDisplay = ({ 
+  results, 
+  searchTerm, 
+  aiGeneratedArticle, 
+  topics = [],
+  viewMode = "sources",
+  onToggleViewMode
+}: ResultsDisplayProps) => {
   const [playingItemId, setPlayingItemId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -103,14 +125,36 @@ const ResultsDisplay = ({ results, searchTerm }: ResultsDisplayProps) => {
           {searchTerm ? `Results for "${searchTerm}"` : "Latest News"}
         </h2>
         
-        <Button 
-          onClick={handleExportPDF} 
-          disabled={isExporting || results.length === 0} 
-          className="flex items-center gap-2"
-        >
-          <Download className="h-4 w-4" />
-          {isExporting ? "Exporting..." : "Export PDF"}
-        </Button>
+        <div className="flex gap-2">
+          {aiGeneratedArticle && onToggleViewMode && (
+            <Button 
+              onClick={onToggleViewMode} 
+              variant="outline" 
+              className="flex items-center gap-2"
+            >
+              {viewMode === "sources" ? (
+                <>
+                  <BookText className="h-4 w-4" />
+                  View Article
+                </>
+              ) : (
+                <>
+                  <BookOpen className="h-4 w-4" />
+                  View Sources
+                </>
+              )}
+            </Button>
+          )}
+          
+          <Button 
+            onClick={handleExportPDF} 
+            disabled={isExporting || results.length === 0} 
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? "Exporting..." : "Export PDF"}
+          </Button>
+        </div>
       </div>
 
       {results.length === 0 ? (
@@ -123,6 +167,13 @@ const ResultsDisplay = ({ results, searchTerm }: ResultsDisplayProps) => {
               : "No articles available. Please check back later."}
           </p>
         </div>
+      ) : viewMode === "article" && aiGeneratedArticle ? (
+        <ArticleView 
+          article={aiGeneratedArticle}
+          searchTerm={searchTerm}
+          relatedSources={results}
+          topics={topics}
+        />
       ) : (
         <div className="space-y-6">
           {results.map((item) => (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import Sidebar from "@/components/Sidebar";
@@ -21,6 +22,9 @@ const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [aiGeneratedArticle, setAiGeneratedArticle] = useState<string | undefined>();
+  const [aiTopics, setAiTopics] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<"sources" | "article">("sources");
 
   // Initialize data on component mount
   useEffect(() => {
@@ -45,6 +49,7 @@ const Index = () => {
     setIsLoading(true);
     setCurrentTopic(input);
     setAnalyticsPanelCollapsed(false);
+    setViewMode("sources"); // Reset to sources view for new searches
     
     try {
       // If we haven't loaded any items yet or need fresh data
@@ -61,10 +66,20 @@ const Index = () => {
       const analytics = processAnalytics(filteredResults);
       setAnalyticsData(analytics);
       
-      // Generate AI summary (in production, this would connect to Azure OpenAI)
+      // Generate AI summary (connecting to Azure OpenAI)
       const summary = await generateSummary(filteredResults);
       
-      toast.success(`Found ${filteredResults.length} sources about "${input}"`);
+      if (summary) {
+        setAiGeneratedArticle(summary.article);
+        setAiTopics(summary.topics);
+        
+        // If results are found, toggle to article view automatically
+        if (filteredResults.length > 0) {
+          setViewMode("article");
+        }
+        
+        toast.success(`Generated an AI article about "${input}" from ${filteredResults.length} sources`);
+      }
     } catch (error) {
       console.error("Error during search:", error);
       toast.error("There was an error processing your search. Please try again.");
@@ -79,6 +94,10 @@ const Index = () => {
     setIsExporting(true);
     await exportToPDF(results, currentTopic);
     setIsExporting(false);
+  };
+
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === "sources" ? "article" : "sources");
   };
 
   return (
@@ -108,7 +127,7 @@ const Index = () => {
                 </div>
                 <h1 className="text-3xl font-bold mb-4">Welcome to Tunei</h1>
                 <p className="text-lg text-muted-foreground mb-8">
-                  Your AI-powered media intelligence platform. Get personalized, real-time insights across the internet.
+                  Your AI-powered media intelligence platform. Get personalized, real-time insights and AI-generated news articles.
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Start by entering a topic or question below
@@ -136,9 +155,17 @@ const Index = () => {
                   <div className="absolute top-1 left-1 right-1 bottom-1 rounded-full border-4 border-t-transparent border-r-primary border-b-transparent border-l-transparent animate-spin" style={{ animationDuration: "1.5s" }}></div>
                 </div>
                 <p className="mt-4 text-muted-foreground">Analyzing sources about "{currentTopic}"...</p>
+                <p className="mt-2 text-xs text-muted-foreground">Generating AI article...</p>
               </div>
             ) : (
-              <ResultsDisplay results={results} searchTerm={currentTopic} />
+              <ResultsDisplay 
+                results={results} 
+                searchTerm={currentTopic} 
+                aiGeneratedArticle={aiGeneratedArticle}
+                topics={aiTopics}
+                viewMode={viewMode}
+                onToggleViewMode={toggleViewMode}
+              />
             )}
           </div>
           

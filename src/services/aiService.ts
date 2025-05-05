@@ -7,10 +7,10 @@ interface SummaryResult {
   summary: string;
   topics: string[];
   entities: { name: string; type: string }[];
+  article: string; // New field for the generated news article
 }
 
-// Simple mock AI summarization for now
-// In production, this would connect to Azure OpenAI or another provider
+// Use Azure OpenAI to generate a summary and news article
 export const generateSummary = async (items: RssItem[]): Promise<SummaryResult | null> => {
   // Check if Azure OpenAI is configured
   if (!apiConfig.azureOpenAI.isEnabled) {
@@ -19,9 +19,68 @@ export const generateSummary = async (items: RssItem[]): Promise<SummaryResult |
   }
 
   try {
-    // This is where you would make the actual API call to Azure OpenAI
-    // For now, we'll use the mock implementation
-    return mockSummarization(items);
+    // Extract titles and descriptions from RSS items
+    const contentToSummarize = items.map(item => ({
+      title: item.title,
+      description: item.description,
+      source: item.source,
+      link: item.link,
+      publishDate: item.publishDate
+    }));
+
+    // Prepare prompt for Azure OpenAI
+    const prompt = {
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional news editor that specializes in creating high-quality news articles based on multiple sources. Create a concise, well-structured news article that combines information from the provided sources. Organize the article with a compelling headline, a strong introduction, detailed body paragraphs, and a conclusion. Include relevant facts, quotes, and mention the sources."
+        },
+        {
+          role: "user",
+          content: `Please create a comprehensive news article based on these sources: ${JSON.stringify(contentToSummarize)}`
+        }
+      ],
+      temperature: 0.5,
+      top_p: 0.95,
+      max_tokens: 800
+    };
+
+    // Make request to Azure OpenAI API
+    const apiUrl = `${apiConfig.azureOpenAI.endpoint}openai/deployments/${apiConfig.azureOpenAI.deploymentName}/chat/completions?api-version=${apiConfig.azureOpenAI.apiVersion}`;
+    
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiConfig.azureOpenAI.apiKey
+      },
+      body: JSON.stringify(prompt)
+    });
+    
+    // Parse response
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Azure OpenAI API error:", errorText);
+      throw new Error(`Azure OpenAI API returned ${response.status}: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    const generatedContent = data.choices[0].message.content;
+
+    // Extract entities and topics using a simple keyword extraction
+    const entities = extractEntities(items);
+    const topics = extractTopics(items);
+    
+    // Create a summary extract from the first paragraph of the article
+    const summary = generatedContent.split('\n\n')[0];
+    
+    return {
+      summary: summary,
+      article: generatedContent,
+      topics: topics,
+      entities: entities
+    };
+    
   } catch (error) {
     console.error("Error generating AI summary:", error);
     toast.error("There was an error generating the AI summary. Using simplified analysis instead.");
@@ -29,7 +88,70 @@ export const generateSummary = async (items: RssItem[]): Promise<SummaryResult |
   }
 };
 
-// Mock implementation that extracts data from the RSS items
+// Extract potential entities (people, organizations)
+const extractEntities = (items: RssItem[]): { name: string; type: string }[] => {
+  const allContent = items.map(item => `${item.title} ${item.description}`).join(' ');
+  const entities: { name: string; type: string }[] = [];
+  
+  // Simple regex for person names (not comprehensive but works for demonstration)
+  const potentialNames = allContent.match(/[A-Z][a-z]+ [A-Z][a-z]+/g) || [];
+  
+  potentialNames.forEach(name => {
+    // Simple heuristic to avoid duplicates
+    if (!entities.some(e => e.name === name)) {
+      entities.push({
+        name,
+        // Simple type assignment based on context words
+        type: allContent.includes(`President ${name}`) || allContent.includes(`Minister ${name}`) 
+          ? "Person - Political Figure"
+          : allContent.includes(`CEO ${name}`) || allContent.includes(`founder ${name}`)
+          ? "Person - Business Leader"
+          : "Person"
+      });
+    }
+  });
+
+  // Find organization names (simple heuristic)
+  const orgKeywords = ["Inc.", "Corp.", "Company", "Organization", "Agency", "Group", "Ltd"];
+  orgKeywords.forEach(keyword => {
+    const regex = new RegExp(`[A-Z][A-Za-z]+ ${keyword}`, 'g');
+    const matches = allContent.match(regex) || [];
+    
+    matches.forEach(match => {
+      if (!entities.some(e => e.name === match)) {
+        entities.push({
+          name: match,
+          type: "Organization"
+        });
+      }
+    });
+  });
+  
+  return entities.slice(0, 10);
+};
+
+// Extract topics using simple keyword frequency
+const extractTopics = (items: RssItem[]): string[] => {
+  const allContent = items.map(item => `${item.title} ${item.description}`).join(' ').toLowerCase();
+  const words = allContent.match(/\b\w{4,}\b/g) || [];
+  const commonWords = new Set(['this', 'that', 'these', 'those', 'with', 'from', 'have', 'been', 'were', 'they', 'their', 'would', 'about', 'there', 'which']);
+  
+  // Count word frequency
+  const wordCount: Record<string, number> = {};
+  words.forEach(word => {
+    if (!commonWords.has(word)) {
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    }
+  });
+  
+  // Sort by frequency
+  return Object.entries(wordCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word)
+    .slice(0, 10);
+};
+
+// Mock implementation as fallback
 const mockSummarization = (items: RssItem[]): SummaryResult => {
   // Extract all titles and descriptions
   const allContent = items.map(item => `${item.title} ${item.description}`).join(' ');
@@ -50,57 +172,14 @@ const mockSummarization = (items: RssItem[]): SummaryResult => {
     }
   }
   
-  // Simple topic extraction (in a real app, would use NLP/ML)
-  const topicWords = new Set<string>();
-  const commonWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'at', 'for', 'with', 'by', 'about', 'as', 'into', 'like', 'through', 'after', 'over', 'between', 'out', 'from', 'up', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'may', 'might', 'must', 'can', 'could', 'that', 'this', 'these', 'those', 'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'whom', 'whose', 'where', 'when', 'why', 'how']);
-  
-  items.forEach(item => {
-    const titleWords = item.title.toLowerCase().match(/\b(\w+)\b/g) || [];
-    titleWords.forEach(word => {
-      if (word.length > 4 && !commonWords.has(word)) {
-        topicWords.add(word);
-      }
-    });
-  });
-  
-  // Extract potential entities (people, organizations)
-  const entities: { name: string; type: string }[] = [];
-  const potentialNames = allContent.match(/[A-Z][a-z]+ [A-Z][a-z]+/g) || [];
-  
-  potentialNames.forEach(name => {
-    // Simple heuristic to avoid duplicates
-    if (!entities.some(e => e.name === name)) {
-      entities.push({
-        name,
-        // Simple type assignment based on context words
-        type: allContent.includes(`President ${name}`) || allContent.includes(`Minister ${name}`) 
-          ? "Person - Political Figure"
-          : allContent.includes(`CEO ${name}`) || allContent.includes(`founder ${name}`)
-          ? "Person - Business Leader"
-          : "Person"
-      });
-    }
-  });
-  
-  // Find organization names (simple heuristic)
-  const orgKeywords = ["Inc.", "Corp.", "Company", "Organization", "Agency", "Group", "Ltd"];
-  orgKeywords.forEach(keyword => {
-    const regex = new RegExp(`[A-Z][A-Za-z]+ ${keyword}`, 'g');
-    const matches = allContent.match(regex) || [];
-    
-    matches.forEach(match => {
-      if (!entities.some(e => e.name === match)) {
-        entities.push({
-          name: match,
-          type: "Organization"
-        });
-      }
-    });
-  });
+  // Generate a mock news article
+  const articleTitle = items.length > 0 ? `Latest Updates on ${items[0].title.split(' ').slice(0, 3).join(' ')}...` : "Latest News Updates";
+  const mockArticle = `${articleTitle}\n\n${summaryParts.join(' ')}\n\nThis news compilation is based on sources from ${items.map(item => item.source).filter((v, i, a) => a.indexOf(v) === i).join(', ')}.`;
   
   return {
     summary: summaryParts.join(' '),
-    topics: Array.from(topicWords).slice(0, 10),
-    entities: entities.slice(0, 10)
+    article: mockArticle,
+    topics: extractTopics(items),
+    entities: extractEntities(items)
   };
 };
