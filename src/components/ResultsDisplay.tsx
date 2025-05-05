@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -57,11 +56,7 @@ const ResultsDisplay = ({ results, searchTerm }: ResultsDisplayProps) => {
       }
     } catch (error) {
       console.error("Speech playback error:", error);
-      toast({
-        title: "Speech Playback Error",
-        description: "There was an error playing the audio. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("There was an error playing the audio. Please try again.");
       setPlayingItemId(null);
     }
   };

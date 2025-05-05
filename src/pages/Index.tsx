@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import Sidebar from "@/components/Sidebar";
 import InputBox from "@/components/InputBox";
 import ResultsDisplay from "@/components/ResultsDisplay";
 import AnalyticsPanel from "@/components/AnalyticsPanel";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { fetchRssFeeds, processRssItems, RssItem } from "../services/rssService";
 import { processAnalytics, AnalyticsData } from "../services/analyticsService";
@@ -23,7 +21,6 @@ const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const { toast: toastNotification } = useToast();
 
   // Initialize data on component mount
   useEffect(() => {
@@ -67,17 +64,10 @@ const Index = () => {
       // Generate AI summary (in production, this would connect to Azure OpenAI)
       const summary = await generateSummary(filteredResults);
       
-      toast({
-        title: "Analysis Complete",
-        description: `Found ${filteredResults.length} sources about "${input}"`,
-      });
+      toast.success(`Found ${filteredResults.length} sources about "${input}"`);
     } catch (error) {
       console.error("Error during search:", error);
-      toast({
-        title: "Search Error",
-        description: "There was an error processing your search. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("There was an error processing your search. Please try again.");
     } finally {
       setIsLoading(false);
     }
