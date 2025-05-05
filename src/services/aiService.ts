@@ -19,7 +19,7 @@ export const generateSummary = async (items: RssItem[]): Promise<SummaryResult |
   }
 
   try {
-    // Extract titles and descriptions from RSS items
+    // Extract relevant data from RSS items
     const contentToSummarize = items.map(item => ({
       title: item.title,
       description: item.description,
@@ -28,25 +28,40 @@ export const generateSummary = async (items: RssItem[]): Promise<SummaryResult |
       publishDate: item.publishDate
     }));
 
+    console.log(`Preparing to summarize ${items.length} items with Azure OpenAI`);
+    
+    // Prepare system prompt for better article generation
+    const systemPrompt = `You are a professional news editor that specializes in creating high-quality news articles based on multiple sources. 
+Create a concise, well-structured news article that combines information from the provided sources.
+Follow this structure:
+1. Create a compelling headline (first line of the response)
+2. Write a strong introduction summarizing the key points
+3. Include 3-4 detailed body paragraphs with relevant facts
+4. Add a brief conclusion
+5. Mention the original sources where appropriate
+Use a formal journalistic tone and ensure factual accuracy. If sources contradict each other, note this in your article.`;
+
     // Prepare prompt for Azure OpenAI
     const prompt = {
       messages: [
         {
           role: "system",
-          content: "You are a professional news editor that specializes in creating high-quality news articles based on multiple sources. Create a concise, well-structured news article that combines information from the provided sources. Organize the article with a compelling headline, a strong introduction, detailed body paragraphs, and a conclusion. Include relevant facts, quotes, and mention the sources."
+          content: systemPrompt
         },
         {
           role: "user",
           content: `Please create a comprehensive news article based on these sources: ${JSON.stringify(contentToSummarize)}`
         }
       ],
-      temperature: 0.5,
+      temperature: 0.7,
       top_p: 0.95,
-      max_tokens: 800
+      max_tokens: 1000
     };
 
     // Make request to Azure OpenAI API
     const apiUrl = `${apiConfig.azureOpenAI.endpoint}openai/deployments/${apiConfig.azureOpenAI.deploymentName}/chat/completions?api-version=${apiConfig.azureOpenAI.apiVersion}`;
+    
+    console.log(`Sending request to Azure OpenAI: ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -61,11 +76,15 @@ export const generateSummary = async (items: RssItem[]): Promise<SummaryResult |
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Azure OpenAI API error:", errorText);
+      console.error(`Response status: ${response.status}`);
       throw new Error(`Azure OpenAI API returned ${response.status}: ${errorText}`);
     }
     
     const data = await response.json();
+    console.log("Received response from Azure OpenAI");
+    
     const generatedContent = data.choices[0].message.content;
+    console.log("Generated content length:", generatedContent.length);
 
     // Extract entities and topics using a simple keyword extraction
     const entities = extractEntities(items);
@@ -153,32 +172,56 @@ const extractTopics = (items: RssItem[]): string[] => {
 
 // Mock implementation as fallback
 const mockSummarization = (items: RssItem[]): SummaryResult => {
-  // Extract all titles and descriptions
-  const allContent = items.map(item => `${item.title} ${item.description}`).join(' ');
+  // Create a more sophisticated mock article for better testing
+  const today = new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
   
-  // Create a simple summary by taking first sentences from different articles
-  const summaryParts: string[] = [];
-  let totalLength = 0;
-  const targetLength = 500;
+  // Get unique sources
+  const sources = [...new Set(items.map(item => item.source))].filter(Boolean);
+  const sourceText = sources.length > 0 
+    ? sources.join(', ') 
+    : "various news outlets";
   
-  // Get first sentence from each article until we reach target length
-  for (const item of items) {
-    if (totalLength >= targetLength) break;
+  // Generate article title based on items or default
+  const articleTitle = items.length > 0 
+    ? `Latest Updates: ${items[0].title.split(' ').slice(0, 5).join(' ')}...` 
+    : "Today's Top Stories: Global and Regional Updates";
+  
+  // Create intro paragraph
+  let article = `${articleTitle}\n\n`;
+  article += `As of ${today}, reports from ${sourceText} highlight several significant developments. `;
+  
+  // Add content from items if available
+  if (items.length > 0) {
+    // Add first paragraph from first item
+    article += `${items[0].description} `;
     
-    const firstSentence = item.description.split(/[.!?](\s|$)/)[0] + '.';
-    if (firstSentence.length > 10) {
-      summaryParts.push(firstSentence);
-      totalLength += firstSentence.length;
+    // Add second paragraph with more sources
+    article += `\n\nExperts are closely monitoring these developments. `;
+    
+    if (items.length > 1) {
+      article += `According to ${items[1].source}, "${items[1].description.substring(0, 100)}..." `;
     }
+    
+    // Add third paragraph with analysis
+    article += `\n\nThe implications of these events are significant. `;
+    if (items.length > 2) {
+      article += `${items[2].description.substring(0, 150)}... `;
+    }
+    
+    // Add conclusion
+    article += `\n\nAs the situation continues to evolve, more updates are expected from ${sourceText}.`;
+  } else {
+    // Fallback content if no items are available
+    article += `Current events around the globe continue to develop. Economic, political, and social trends are shifting as various factors influence regional stability and growth. Analysts are closely monitoring these developments and their potential impacts. More details will emerge as reporting continues.`;
   }
   
-  // Generate a mock news article
-  const articleTitle = items.length > 0 ? `Latest Updates on ${items[0].title.split(' ').slice(0, 3).join(' ')}...` : "Latest News Updates";
-  const mockArticle = `${articleTitle}\n\n${summaryParts.join(' ')}\n\nThis news compilation is based on sources from ${items.map(item => item.source).filter((v, i, a) => a.indexOf(v) === i).join(', ')}.`;
-  
   return {
-    summary: summaryParts.join(' '),
-    article: mockArticle,
+    summary: article.split('\n\n')[0] + ' ' + (article.split('\n\n')[1] || ''),
+    article: article,
     topics: extractTopics(items),
     entities: extractEntities(items)
   };

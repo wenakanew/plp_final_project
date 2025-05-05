@@ -5,7 +5,7 @@
 export const apiConfig = {
   // Azure OpenAI Configuration
   azureOpenAI: {
-    isEnabled: true, // Enabled for AI summarization
+    isEnabled: true,
     endpoint: "https://ai-kaniujeffray7064ai233651742665.openai.azure.com/",
     apiKey: "FiwgwdRSeBh3e45430pUCXDax50y8MqSkEjL3BvrGPmauvsvh6BzJQQJ99BDACHYHv6XJ3w3AAAAACOGBna5",
     deploymentName: "gpt-4o",
@@ -14,13 +14,13 @@ export const apiConfig = {
   
   // Social Media APIs
   twitter: {
-    isEnabled: true, // Enabled for Twitter integration
+    isEnabled: true,
     bearerToken: "AAAAAAAAAAAAAAAAAAAAANXR0gEAAAAAVUL%2BszDoveFykAyxtKIb7gXAISY%3DLHuwzojsOGRhdn2WbJLwZuwuO7urTbEltBpCbHV9Nbmp8a8AHF"
   },
   
   // Telegram Configuration
   telegram: {
-    isEnabled: true, // Enabled for Telegram integration
+    isEnabled: true,
     apiId: 24998427,
     apiHash: "2d1a638860d3dd1f5a919108f687d5bf",
     channels: ["BBCBreaking", "cnnbrk", "AJEnglish", "NTVKenyaOfficial", "citizentvkenya", "standardkenya", "NationMediaGroup"]
@@ -33,7 +33,7 @@ export const apiConfig = {
   
   // RSS Feed Configuration
   rssFeeds: {
-    isEnabled: true, // Using RSS feeds
+    isEnabled: true,
     feeds: [
       "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
       "https://rss.cnn.com/rss/edition.rss",
@@ -65,5 +65,5 @@ export const featureFlags = {
   imagePreview: true,
   analytics: true,
   pdfExport: true,
-  aiSummarization: true // Enabled since we have Azure OpenAI configured
+  aiSummarization: true
 };

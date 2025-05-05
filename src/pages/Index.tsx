@@ -25,18 +25,28 @@ const Index = () => {
   const [aiGeneratedArticle, setAiGeneratedArticle] = useState<string | undefined>();
   const [aiTopics, setAiTopics] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"sources" | "article">("sources");
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Initialize data on component mount
   useEffect(() => {
     const initializeData = async () => {
       try {
+        setIsLoading(true);
+        console.log("Initializing data...");
         const items = await fetchRssFeeds();
+        console.log(`Fetched ${items.length} items during initialization`);
+        
         if (items.length > 0) {
           setAllItems(items);
-          setIsInitialLoad(false);
+          setApiError(null);
+        } else {
+          setApiError("No data could be fetched from the configured sources.");
         }
       } catch (error) {
         console.error("Failed to initialize data:", error);
+        setApiError("Failed to fetch data from sources.");
+      } finally {
+        setIsLoading(false);
         setIsInitialLoad(false);
       }
     };
@@ -50,38 +60,54 @@ const Index = () => {
     setCurrentTopic(input);
     setAnalyticsPanelCollapsed(false);
     setViewMode("sources"); // Reset to sources view for new searches
+    setApiError(null);
     
     try {
+      console.log(`Processing search for: "${input}"`);
+      
       // If we haven't loaded any items yet or need fresh data
+      let itemsToProcess = allItems;
       if (allItems.length === 0) {
+        console.log("No pre-loaded items, fetching fresh data...");
         const freshItems = await fetchRssFeeds();
         setAllItems(freshItems);
+        itemsToProcess = freshItems;
       }
       
+      console.log(`Processing ${itemsToProcess.length} items for search term: "${input}"`);
+      
       // Process items based on search term
-      const filteredResults = processRssItems(allItems, input);
+      const filteredResults = processRssItems(itemsToProcess, input);
+      console.log(`Found ${filteredResults.length} items matching search term`);
       setResults(filteredResults);
       
       // Generate analytics from results
       const analytics = processAnalytics(filteredResults);
       setAnalyticsData(analytics);
       
-      // Generate AI summary (connecting to Azure OpenAI)
+      // Generate AI summary
+      console.log("Generating AI summary...");
       const summary = await generateSummary(filteredResults);
       
       if (summary) {
+        console.log("AI summary generated successfully");
         setAiGeneratedArticle(summary.article);
         setAiTopics(summary.topics);
         
         // If results are found, toggle to article view automatically
         if (filteredResults.length > 0) {
           setViewMode("article");
+          toast.success(`Generated an AI article about "${input}" from ${filteredResults.length} sources`);
+        } else {
+          toast.warning(`No sources found for "${input}", but we've generated an article based on available data.`);
         }
-        
-        toast.success(`Generated an AI article about "${input}" from ${filteredResults.length} sources`);
+      } else {
+        console.error("Failed to generate summary");
+        toast.error("Could not generate an AI article. Please try a different search term.");
       }
     } catch (error) {
       console.error("Error during search:", error);
+      setApiError("There was an error processing your search. Please try again.");
       toast.error("There was an error processing your search. Please try again.");
     } finally {
       setIsLoading(false);
@@ -156,6 +182,36 @@ const Index = () => {
                 </div>
                 <p className="mt-4 text-muted-foreground">Analyzing sources about "{currentTopic}"...</p>
                 <p className="mt-2 text-xs text-muted-foreground">Generating AI article...</p>
+              </div>
+            ) : apiError ? (
+              <div className="h-full flex flex-col items-center justify-center max-w-lg mx-auto text-center">
+                <div className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full p-6 mb-6">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold mb-4">API Connection Error</h2>
+                <p className="mb-6">{apiError}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Try searching again or with a different topic.
+                </p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-md"
+                >
+                  Reload Application
+                </button>
               </div>
             ) : (
               <ResultsDisplay 
