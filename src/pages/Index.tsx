@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import Sidebar from "@/components/Sidebar";
@@ -26,6 +25,7 @@ const Index = () => {
   const [aiTopics, setAiTopics] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"sources" | "article">("sources");
   const [apiError, setApiError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Initialize data on component mount
   useEffect(() => {
@@ -52,7 +52,7 @@ const Index = () => {
     };
     
     initializeData();
-  }, []);
+  }, [retryCount]); // Add retryCount to dependencies to allow manual refresh
 
   const handleSearch = async (input: string) => {
     setShowWelcome(false);
@@ -99,7 +99,13 @@ const Index = () => {
           setViewMode("article");
           toast.success(`Generated an AI article about "${input}" from ${filteredResults.length} sources`);
         } else {
-          toast.warning(`No sources found for "${input}", but we've generated an article based on available data.`);
+          // Even with no direct matches, show article view if we have a generated article
+          if (summary.article) {
+            setViewMode("article");
+            toast.info(`Limited sources found for "${input}", but we've generated an article using available data.`);
+          } else {
+            toast.warning(`No sources found for "${input}". Please try a different search term.`);
+          }
         }
       } else {
         console.error("Failed to generate summary");
@@ -124,6 +130,12 @@ const Index = () => {
 
   const toggleViewMode = () => {
     setViewMode(prev => prev === "sources" ? "article" : "sources");
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setApiError(null);
+    toast.info("Refreshing data sources...");
   };
 
   return (
@@ -207,10 +219,10 @@ const Index = () => {
                   Try searching again or with a different topic.
                 </p>
                 <button 
-                  onClick={() => window.location.reload()} 
+                  onClick={handleRetry} 
                   className="bg-primary text-primary-foreground px-4 py-2 rounded-md"
                 >
-                  Reload Application
+                  Refresh Data Sources
                 </button>
               </div>
             ) : (

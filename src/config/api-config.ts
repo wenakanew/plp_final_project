@@ -41,6 +41,12 @@ export const apiConfig = {
       "https://www.theguardian.com/world/rss",
       "https://nation.africa/kenya/rss",
       "https://www.standardmedia.co.ke/rss/headlines.php"
+    ],
+    // Add additional Kenya-specific feeds that might have William Ruto news
+    kenyaFeeds: [
+      "https://www.the-star.co.ke/rss/",
+      "https://www.kbc.co.ke/rss/",
+      "https://www.capitalfm.co.ke/news/feed/"
     ]
   },
 
