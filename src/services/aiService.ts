@@ -24,11 +24,7 @@ export const generateSummary = async (items: RssItem[]): Promise<SummaryResult |
     return mockSummarization(items);
   } catch (error) {
     console.error("Error generating AI summary:", error);
-    toast({
-      title: "Summarization Failed",
-      description: "There was an error generating the AI summary. Using simplified analysis instead.",
-      variant: "destructive"
-    });
+    toast.error("There was an error generating the AI summary. Using simplified analysis instead.");
     return mockSummarization(items);
   }
 };

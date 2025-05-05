@@ -7,9 +7,9 @@ export const apiConfig = {
   // Azure OpenAI Configuration
   azureOpenAI: {
     isEnabled: false, // Set to true when properly configured on the backend
-    endpoint: process.env.AZURE_OPENAI_ENDPOINT || "",
-    deploymentName: process.env.DEPLOYMENT_NAME || "gpt-4o",
-    apiVersion: process.env.API_VERSION || "2024-12-01-preview"
+    endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT || "",
+    deploymentName: import.meta.env.VITE_DEPLOYMENT_NAME || "gpt-4o",
+    apiVersion: import.meta.env.VITE_API_VERSION || "2024-12-01-preview"
   },
   
   // Social Media APIs
@@ -20,7 +20,7 @@ export const apiConfig = {
   // Telegram Configuration
   telegram: {
     isEnabled: false, // Set to true when properly configured on the backend
-    channels: process.env.TELEGRAM_CHANNELS?.split(',') || ["BBCBreaking", "CNN"]
+    channels: import.meta.env.VITE_TELEGRAM_CHANNELS?.split(',') || ["BBCBreaking", "CNN"]
   },
   
   // YouTube API Configuration

@@ -120,16 +120,9 @@ export const exportToPDF = async (items: RssItem[], searchTerm?: string): Promis
       
     doc.save(filename);
     
-    toast({
-      title: "Export Complete",
-      description: `Your PDF has been exported as ${filename}`,
-    });
+    toast.success(`Your PDF has been exported as ${filename}`);
   } catch (error) {
     console.error("Error exporting to PDF:", error);
-    toast({
-      title: "Export Failed",
-      description: "There was an error creating your PDF. Please try again.",
-      variant: "destructive"
-    });
+    toast.error("There was an error creating your PDF. Please try again.");
   }
 };

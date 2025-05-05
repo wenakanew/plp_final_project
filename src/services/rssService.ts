@@ -85,11 +85,7 @@ export const fetchRssFeeds = async (): Promise<RssItem[]> => {
     return results.flat();
   } catch (error) {
     console.error("Error fetching RSS feeds:", error);
-    toast({
-      title: "Error",
-      description: "Failed to fetch news sources. Please try again later.",
-      variant: "destructive"
-    });
+    toast.error("Failed to fetch news sources. Please try again later.");
     return [];
   }
 };
