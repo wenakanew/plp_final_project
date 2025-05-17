@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   Search, 
@@ -7,9 +6,14 @@ import {
   Mic, 
   CreditCard, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  PenTool,
+  FileText,
+  Newspaper,
+  Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -17,27 +21,44 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const sidebarItems = [
     {
       icon: <Search className="h-5 w-5" />,
       text: "Explore Topics",
-      active: true,
+      path: "/",
+    },
+    {
+      icon: <PenTool className="h-5 w-5" />,
+      text: "Content Generator",
+      path: "/generate",
     },
     {
       icon: <Settings className="h-5 w-5" />,
       text: "AI Summary Settings",
+      path: "/settings",
     },
     {
       icon: <BarChart3 className="h-5 w-5" />,
       text: "Analytics",
+      path: "/analytics",
     },
     {
       icon: <Mic className="h-5 w-5" />,
       text: "Voice Preferences",
+      path: "/voice",
     },
     {
       icon: <CreditCard className="h-5 w-5" />,
       text: "Premium Access",
+      path: "/premium",
+    },
+    {
+      icon: <Upload className="h-5 w-5" />,
+      text: "Vibely",
+      path: "/article-upload",
     },
   ];
 
@@ -64,28 +85,29 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
         
         <div className="flex-1 py-6 space-y-1">
           {sidebarItems.map((item, index) => (
-            <div 
+            <button
               key={index}
+              onClick={() => navigate(item.path)}
               className={cn(
-                "tunei-sidebar-item mx-2 backdrop-blur-sm", 
-                item.active && "active bg-gradient-to-r from-primary/20 to-transparent"
+                "tunei-sidebar-item mx-2 backdrop-blur-sm w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-sidebar-accent/60", 
+                location.pathname === item.path && "active bg-gradient-to-r from-primary/20 to-transparent"
               )}
             >
               <div className={cn(
-                "flex items-center justify-center",
-                item.active && "text-primary"
+                "flex items-center gap-3",
+                location.pathname === item.path && "text-primary"
               )}>
                 {item.icon}
+                {!collapsed && (
+                  <span className={cn(
+                    "transition-opacity duration-200",
+                    location.pathname === item.path ? "text-primary font-medium" : ""
+                  )}>
+                    {item.text}
+                  </span>
+                )}
               </div>
-              {!collapsed && (
-                <span className={cn(
-                  "transition-opacity duration-200",
-                  item.active ? "text-primary font-medium" : ""
-                )}>
-                  {item.text}
-                </span>
-              )}
-            </div>
+            </button>
           ))}
         </div>
 

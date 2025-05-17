@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnalyticsData } from "../services/analyticsService";
+import styles from "./AnalyticsPanel.module.css";
 
 interface AnalyticsPanelProps {
   isCollapsed: boolean;
@@ -63,6 +64,7 @@ const AnalyticsPanel = ({
         <button 
           onClick={() => setIsCollapsed(true)}
           className="p-1.5 hover:bg-sidebar-accent/60 rounded-md transition-colors"
+          title="Collapse panel"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -70,13 +72,13 @@ const AnalyticsPanel = ({
 
       <div className="p-4 space-y-6 flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-32">
-            <div className="relative w-10 h-10">
-              <div className="absolute top-0 left-0 right-0 bottom-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-              <div className="absolute top-1 left-1 right-1 bottom-1 rounded-full border-4 border-t-transparent border-r-primary border-b-transparent border-l-transparent animate-spin" style={{ animationDuration: "1.5s" }}></div>
+          <>
+            <div className="spinner">
+              <div className="outer"></div>
+              <div className="inner"></div>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">Processing data...</p>
-          </div>
+          </>
         ) : !data ? (
           <div className="flex flex-col items-center justify-center h-32 text-center">
             <p className="text-sm text-muted-foreground">No data available. Start by searching for a topic.</p>

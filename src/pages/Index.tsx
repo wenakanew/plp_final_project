@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import TopBar from "@/components/TopBar";
 import Sidebar from "@/components/Sidebar";
@@ -203,11 +202,15 @@ const Index = () => {
             {showWelcome ? (
               <div className="h-full flex flex-col items-center justify-center max-w-lg mx-auto text-center">
                 <div className="bg-gradient-to-r from-primary to-accent rounded-full p-6 mb-6">
-                  <img 
-                    src="/lovable-uploads/2095d46f-4c23-4a22-a63b-a183bfc5247e.png" 
-                    alt="Tunei Logo" 
-                    className="h-10 w-10"
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 relative">
+                      <img 
+                        src="/tunei-logo.png" 
+                        alt="Tunei Logo" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <h1 className="text-3xl font-bold mb-4">Welcome to Tunei</h1>
                 <p className="text-lg text-muted-foreground mb-8">

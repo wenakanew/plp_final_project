@@ -1,8 +1,9 @@
-
 import React from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 interface TopBarProps {
   onExportPDF: () => void;
@@ -11,12 +12,14 @@ interface TopBarProps {
 }
 
 const TopBar = ({ onExportPDF, isExporting = false, hasResults = false }: TopBarProps) => {
+  const { currentUser } = useAuth();
+
   return (
     <div className="w-full bg-background border-b border-border py-4 px-6 flex items-center justify-between backdrop-blur-sm bg-opacity-80">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 relative">
           <img 
-            src="/lovable-uploads/2095d46f-4c23-4a22-a63b-a183bfc5247e.png" 
+            src="/tunei-logo.png" 
             alt="Tunei Logo" 
             className="w-full h-full object-contain"
           />
@@ -42,6 +45,34 @@ const TopBar = ({ onExportPDF, isExporting = false, hasResults = false }: TopBar
           <Download className="h-5 w-5" />
           <span className="sr-only">Download</span>
         </Button>
+        <Link to="/profile">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-secondary/40 backdrop-blur-sm hover:bg-secondary/60"
+          >
+            {currentUser?.photoURL ? (
+              <img 
+                src={currentUser.photoURL} 
+                alt="Profile" 
+                className="h-5 w-5 rounded-full object-cover"
+              />
+            ) : (
+              <User className="h-5 w-5" />
+            )}
+            <span className="sr-only">Profile</span>
+          </Button>
+        </Link>
+        <Link to="/account">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-secondary/40 backdrop-blur-sm hover:bg-secondary/60"
+          >
+            <User className="h-5 w-5" />
+            <span className="sr-only">Account Settings</span>
+          </Button>
+        </Link>
         <ThemeToggle />
       </div>
     </div>
